@@ -1,31 +1,79 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 const WorkoutContext = createContext();
 
 export const WorkoutProvider = ({ children }) => {
+  const { user } = useAuth();
   const [workouts, setWorkouts] = useState([]);
   const [workoutTemplates, setWorkoutTemplates] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      loadUserData();
+    } else {
+      setWorkouts([]);
+      setWorkoutTemplates([]);
+      setLoading(false);
+    }
+  }, [user]);
+
+  const loadUserData = () => {
+    try {
+      const userWorkouts = JSON.parse(localStorage.getItem(`fitlog_workouts_${user.id}`) || '[]');
+      const userTemplates = JSON.parse(localStorage.getItem(`fitlog_templates_${user.id}`) || '[]');
+      
+      setWorkouts(userWorkouts);
+      setWorkoutTemplates(userTemplates);
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveWorkouts = (updatedWorkouts) => {
+    setWorkouts(updatedWorkouts);
+    if (user) {
+      localStorage.setItem(`fitlog_workouts_${user.id}`, JSON.stringify(updatedWorkouts));
+    }
+  };
+
+  const saveTemplates = (updatedTemplates) => {
+    setWorkoutTemplates(updatedTemplates);
+    if (user) {
+      localStorage.setItem(`fitlog_templates_${user.id}`, JSON.stringify(updatedTemplates));
+    }
+  };
 
   const addWorkout = (workout) => {
-    setWorkouts([...workouts, { 
-      ...workout, 
+    const newWorkout = {
+      ...workout,
       id: Date.now(),
+      userId: user?.id,
       timestamp: new Date().toISOString()
-    }]);
+    };
+    
+    const updatedWorkouts = [...workouts, newWorkout];
+    saveWorkouts(updatedWorkouts);
   };
 
   const updateWorkout = (updatedWorkout) => {
-    setWorkouts(workouts.map(workout => 
+    const updatedWorkouts = workouts.map(workout => 
       workout.id === updatedWorkout.id ? { ...updatedWorkout } : workout
-    ));
+    );
+    saveWorkouts(updatedWorkouts);
   };
 
   const deleteWorkout = (workoutId) => {
-    setWorkouts(workouts.filter(workout => workout.id !== workoutId));
+    const updatedWorkouts = workouts.filter(workout => workout.id !== workoutId);
+    saveWorkouts(updatedWorkouts);
   };
 
   const deleteMultipleWorkouts = (workoutIds) => {
-    setWorkouts(workouts.filter(workout => !workoutIds.includes(workout.id)));
+    const updatedWorkouts = workouts.filter(workout => !workoutIds.includes(workout.id));
+    saveWorkouts(updatedWorkouts);
   };
 
   const duplicateWorkout = (workoutId) => {
@@ -37,7 +85,8 @@ export const WorkoutProvider = ({ children }) => {
         name: `${workoutToDuplicate.name} (Copy)`,
         timestamp: new Date().toISOString()
       };
-      setWorkouts([...workouts, duplicatedWorkout]);
+      const updatedWorkouts = [...workouts, duplicatedWorkout];
+      saveWorkouts(updatedWorkouts);
     }
   };
 
@@ -46,9 +95,11 @@ export const WorkoutProvider = ({ children }) => {
       ...workout,
       id: Date.now(),
       isTemplate: true,
+      userId: user?.id,
       createdAt: new Date().toISOString()
     };
-    setWorkoutTemplates([...workoutTemplates, template]);
+    const updatedTemplates = [...workoutTemplates, template];
+    saveTemplates(updatedTemplates);
   };
 
   const loadFromTemplate = (templateId) => {
@@ -93,6 +144,7 @@ export const WorkoutProvider = ({ children }) => {
     <WorkoutContext.Provider value={{ 
       workouts,
       workoutTemplates,
+      loading,
       addWorkout,
       updateWorkout,
       deleteWorkout,

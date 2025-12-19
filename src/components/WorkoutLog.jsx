@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useWorkouts } from '../context/WorkoutContext';
 
 const WorkoutLog = () => {
-  const { addWorkout, fetchExercises, exercises, loading } = useWorkouts();
+  const { addWorkout } = useWorkouts();
   const [workoutName, setWorkoutName] = useState('');
   const [selectedExercises, setSelectedExercises] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMuscle, setSelectedMuscle] = useState('');
+  const [exercises, setExercises] = useState([]);
+  const [loading, setLoading] = useState(false);
 
+  // Mock data - in a real app, this would come from an API
   const muscleGroups = [
     { id: 1, name: 'Biceps' },
     { id: 2, name: 'Triceps' },
@@ -20,9 +23,49 @@ const WorkoutLog = () => {
     { id: 9, name: 'Abs' },
   ];
 
+  // Mock exercises data
+  const mockExercises = [
+    { id: 1, name: 'Bench Press', description: 'Chest exercise', muscle: 4 },
+    { id: 2, name: 'Squat', description: 'Leg exercise', muscle: 6 },
+    { id: 3, name: 'Deadlift', description: 'Full body exercise', muscle: 5 },
+    { id: 4, name: 'Bicep Curl', description: 'Arm exercise', muscle: 1 },
+    { id: 5, name: 'Shoulder Press', description: 'Shoulder exercise', muscle: 3 },
+    { id: 6, name: 'Pull-up', description: 'Back exercise', muscle: 5 },
+    { id: 7, name: 'Push-up', description: 'Chest and arms', muscle: 4 },
+    { id: 8, name: 'Leg Press', description: 'Leg exercise', muscle: 6 },
+    { id: 9, name: 'Tricep Extension', description: 'Arm exercise', muscle: 2 },
+    { id: 10, name: 'Calf Raise', description: 'Calf exercise', muscle: 8 },
+    { id: 11, name: 'Plank', description: 'Core exercise', muscle: 9 },
+    { id: 12, name: 'Lunges', description: 'Leg exercise', muscle: 6 },
+  ];
+
   useEffect(() => {
-    fetchExercises(searchTerm, selectedMuscle);
+    fetchExercises();
   }, [searchTerm, selectedMuscle]);
+
+  const fetchExercises = () => {
+    setLoading(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      let filtered = mockExercises;
+      
+      if (searchTerm) {
+        filtered = filtered.filter(exercise => 
+          exercise.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+      
+      if (selectedMuscle) {
+        filtered = filtered.filter(exercise => 
+          exercise.muscle === parseInt(selectedMuscle)
+        );
+      }
+      
+      setExercises(filtered);
+      setLoading(false);
+    }, 300);
+  };
 
   const handleAddExercise = (exercise) => {
     const newExercise = {
@@ -66,6 +109,7 @@ const WorkoutLog = () => {
     setWorkoutName('');
     setSelectedExercises([]);
     setSearchTerm('');
+    setSelectedMuscle('');
     
     alert('Workout logged successfully!');
   };
@@ -73,11 +117,11 @@ const WorkoutLog = () => {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="card mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Log New Workout</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Log New Workout</h2>
         
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Workout Name
             </label>
             <input
@@ -92,7 +136,7 @@ const WorkoutLog = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Search Exercises
               </label>
               <input
@@ -105,7 +149,7 @@ const WorkoutLog = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Filter by Muscle Group
               </label>
               <select
@@ -125,8 +169,8 @@ const WorkoutLog = () => {
 
           {loading ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading exercises...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-primary-400 mx-auto"></div>
+              <p className="mt-4 text-gray-600 dark:text-gray-400">Loading exercises...</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
@@ -135,11 +179,14 @@ const WorkoutLog = () => {
                   key={exercise.id}
                   type="button"
                   onClick={() => handleAddExercise(exercise)}
-                  className="bg-white border border-gray-300 rounded-lg p-4 hover:border-primary-500 hover:shadow-md transition-all text-left"
+                  className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-4 hover:border-primary-500 dark:hover:border-primary-600 hover:shadow-md transition-all text-left"
                 >
-                  <h3 className="font-medium text-gray-900">{exercise.name}</h3>
-                  <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                    {exercise.description?.replace(/<[^>]*>/g, '').substring(0, 60)}...
+                  <h3 className="font-medium text-gray-900 dark:text-white">{exercise.name}</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                    {exercise.description}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                    {muscleGroups.find(m => m.id === exercise.muscle)?.name}
                   </p>
                 </button>
               ))}
@@ -148,15 +195,15 @@ const WorkoutLog = () => {
 
           {selectedExercises.length > 0 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Selected Exercises</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Selected Exercises</h3>
               {selectedExercises.map((exercise, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800/50">
                   <div className="flex justify-between items-center mb-3">
-                    <h4 className="font-medium text-gray-900">{exercise.name}</h4>
+                    <h4 className="font-medium text-gray-900 dark:text-white">{exercise.name}</h4>
                     <button
                       type="button"
                       onClick={() => handleRemoveExercise(index)}
-                      className="text-red-600 hover:text-red-800"
+                      className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                     >
                       Remove
                     </button>
@@ -164,7 +211,7 @@ const WorkoutLog = () => {
                   
                   <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Sets
                       </label>
                       <input
@@ -178,7 +225,7 @@ const WorkoutLog = () => {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Reps
                       </label>
                       <input
@@ -192,7 +239,7 @@ const WorkoutLog = () => {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Weight (kg)
                       </label>
                       <input
@@ -207,7 +254,7 @@ const WorkoutLog = () => {
                   </div>
                   
                   <div className="mt-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Notes (optional)
                     </label>
                     <input
